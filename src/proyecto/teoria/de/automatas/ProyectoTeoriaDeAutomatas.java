@@ -1,20 +1,9 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Main.java to edit this template
- */
 package proyecto.teoria.de.automatas;
 
-/**
- *
- * @author DELL
- */
 public class ProyectoTeoriaDeAutomatas {
 
-    /**
-     * @param args the command line arguments
-     */
     public static void main(String[] args) {
-        // TODO code application logic here
+        MenuPrincipal ventana = new MenuPrincipal();
+        ventana.setVisible(true);
     }
-    
 }
