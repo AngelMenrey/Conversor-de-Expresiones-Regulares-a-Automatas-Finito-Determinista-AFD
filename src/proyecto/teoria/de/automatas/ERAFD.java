@@ -2,7 +2,9 @@ package proyecto.teoria.de.automatas;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import javax.imageio.ImageIO;
 
 public class ERAFD extends JFrame {
@@ -78,6 +80,8 @@ public class ERAFD extends JFrame {
             dispose();
         });
 
+        botonCaptura.addActionListener(e -> capturarPantalla());
+
         setContentPane(panelConFondo);
     }
 
@@ -108,5 +112,33 @@ public class ERAFD extends JFrame {
 
         Object[] options = {"ACEPTAR"};
         JOptionPane.showOptionDialog(this, scrollPane, "FUENTES", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
+    }
+
+    private void capturarPantalla() {
+        try {
+            BufferedImage imagen = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
+            Graphics2D g2d = imagen.createGraphics();
+            paint(g2d);
+            g2d.dispose();
+
+            File directorio = new File("Proyecto-Teoria-de-Automatas\\src\\proyecto\\teoria\\de\\automatas\\capturas");
+            if (!directorio.exists()) {
+                directorio.mkdirs();
+            }
+
+            File archivo = new File(directorio, "captura_" + System.currentTimeMillis() + ".png");
+            ImageIO.write(imagen, "png", archivo);
+
+            JPanel panel = new JPanel(new BorderLayout());
+            JLabel label = new JLabel("Captura guardada correctamente");
+            panel.add(label, BorderLayout.CENTER);
+            panel.setPreferredSize(new Dimension(400, 100));
+
+            Object[] options = {"ACEPTAR"};
+            JOptionPane.showOptionDialog(this, panel, "Captura de Pantalla", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error al guardar la captura de pantalla.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 }
