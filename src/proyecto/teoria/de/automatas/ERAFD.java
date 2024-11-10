@@ -2,7 +2,9 @@ package proyecto.teoria.de.automatas;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import javax.imageio.ImageIO;
 
 public class ERAFD extends JFrame {
@@ -39,7 +41,7 @@ public class ERAFD extends JFrame {
                 }
 
                 g.setColor(Color.BLACK);
-                int rectHeight = 70; 
+                int rectHeight = 70;
                 g.fillRect(0, 0, width, rectHeight);
             }
         };
@@ -47,46 +49,54 @@ public class ERAFD extends JFrame {
 
         JButton botonERaAFD = crearBoton("ER A AFD", "#837a7b");
         JButton botonCadena = crearBoton("CADENA", "#837a7b");
-        JButton botonBibliografias = crearBoton("BIBLIOGRAFIAS", "#837a7b");
+        JButton botonFuentes = crearBoton("FUENTES", "#837a7b");
         JButton botonRegresar = crearBoton("REGRESAR", "#837a7b");
+        JButton botonPasos = crearBoton("PASOS", "#837a7b");
+        JButton botonCaptura = crearBoton("CAPTURA", "#837a7b");
 
-        int buttonWidth = 150;
+        int buttonWidth = 120;
         int buttonHeight = 40;
         int buttonY = 15; 
         int spacing = 10; 
 
         botonERaAFD.setBounds(10, buttonY, buttonWidth, buttonHeight);
         botonCadena.setBounds(10 + buttonWidth + spacing, buttonY, buttonWidth, buttonHeight);
-        botonBibliografias.setBounds(10 + 2 * (buttonWidth + spacing), buttonY, buttonWidth, buttonHeight);
+        botonFuentes.setBounds(10 + 2 * (buttonWidth + spacing), buttonY, buttonWidth, buttonHeight);
         botonRegresar.setBounds(10 + 3 * (buttonWidth + spacing), buttonY, buttonWidth, buttonHeight);
+        botonPasos.setBounds(10 + 4 * (buttonWidth + spacing), buttonY, buttonWidth, buttonHeight);
+        botonCaptura.setBounds(10 + 5 * (buttonWidth + spacing), buttonY, buttonWidth, buttonHeight);
 
         panelConFondo.add(botonERaAFD);
         panelConFondo.add(botonCadena);
-        panelConFondo.add(botonBibliografias);
+        panelConFondo.add(botonFuentes);
         panelConFondo.add(botonRegresar);
+        panelConFondo.add(botonPasos);
+        panelConFondo.add(botonCaptura);
 
-        botonBibliografias.addActionListener(e -> mostrarBibliografias());
+        botonFuentes.addActionListener(e -> mostrarFuentes());
 
         botonRegresar.addActionListener(e -> {
             new MenuPrincipal().setVisible(true);
             dispose();
         });
 
+        botonCaptura.addActionListener(e -> capturarPantalla());
+
         setContentPane(panelConFondo);
     }
 
     private JButton crearBoton(String texto, String colorHex) {
         JButton boton = new JButton(texto);
-        boton.setFont(new Font("Montserrat", Font.BOLD, 14)); 
+        boton.setFont(new Font("Montserrat", Font.BOLD, 12));
         boton.setBackground(Color.decode(colorHex));
         boton.setForeground(Color.WHITE);
         boton.setFocusPainted(false);
         return boton;
     }
 
-    private void mostrarBibliografias() {
-        String bibliografias = "<html><body style='font-family: Montserrat;'>" +
-            "<h2>Fuentes Bibliográficas</h2>" +
+    private void mostrarFuentes() {
+        String fuentes = "<html><body style='font-family: Montserrat;'>" +
+            "<h2>FUENTES BIBLIOGRÁFICAS</h2>" +
             "<ol>" +
             "<li>Hopcroft, J. E., Motwani, R., & Ullman, J. D. (2006). <i>Introduction to Automata Theory, Languages, and Computation</i>. Addison-Wesley.</li>" +
             "<li>Thompson, K. (1968). <i>Regular Expression Search Algorithm</i>. Communications of the ACM, 11(6), 419-422.</li>" +
@@ -94,13 +104,41 @@ public class ERAFD extends JFrame {
             "</ol>" +
             "</body></html>";
 
-        JEditorPane editorPane = new JEditorPane("text/html", bibliografias);
+        JEditorPane editorPane = new JEditorPane("text/html", fuentes);
         editorPane.setEditable(false);
-        editorPane.setFont(new Font("Montserrat", Font.PLAIN, 14));
+        editorPane.setFont(new Font("Montserrat", Font.PLAIN, 12));
         JScrollPane scrollPane = new JScrollPane(editorPane);
         scrollPane.setPreferredSize(new Dimension(600, 400));
 
-        Object[] options = {"Aceptar"};
-        JOptionPane.showOptionDialog(this, scrollPane, "Bibliografías", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
+        Object[] options = {"ACEPTAR"};
+        JOptionPane.showOptionDialog(this, scrollPane, "FUENTES", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
+    }
+
+    private void capturarPantalla() {
+        try {
+            BufferedImage imagen = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
+            Graphics2D g2d = imagen.createGraphics();
+            paint(g2d);
+            g2d.dispose();
+
+            File directorio = new File("Proyecto-Teoria-de-Automatas\\src\\proyecto\\teoria\\de\\automatas\\capturas");
+            if (!directorio.exists()) {
+                directorio.mkdirs();
+            }
+
+            File archivo = new File(directorio, "captura_" + System.currentTimeMillis() + ".png");
+            ImageIO.write(imagen, "png", archivo);
+
+            JPanel panel = new JPanel(new BorderLayout());
+            JLabel label = new JLabel("Captura guardada correctamente");
+            panel.add(label, BorderLayout.CENTER);
+            panel.setPreferredSize(new Dimension(400, 100));
+
+            Object[] options = {"ACEPTAR"};
+            JOptionPane.showOptionDialog(this, panel, "Captura de Pantalla", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error al guardar la captura de pantalla.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 }
