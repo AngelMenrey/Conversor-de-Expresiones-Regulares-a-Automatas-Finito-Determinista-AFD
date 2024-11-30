@@ -165,12 +165,20 @@ public class Operations {
             } else if (c == ')') {
                 logs.append("\nse encontro ')'");
 
-                if (!operators.isEmpty() && operators.peek() != '(') {
-                    
-                }
+                
+                boolean entered=false;
 
                 while (!operators.isEmpty() && operators.peek() != '(') {
                     processSA(operators, automatas,logs);
+                    if (!entered) {
+                        entered=true;
+                    }
+                }
+                if (!entered) {
+                    logs.append("\nno hay operadores en este parentesis por lo que puede contener unautomata o estar vacio");
+                    if (regex.charAt(i-1)!='(') {
+                        logs.append("\nexiste dentro del parentesis, automata:"+automatas.peek().name);
+                    }
                 }
                 operators.pop(); // Quitar '('
                 
