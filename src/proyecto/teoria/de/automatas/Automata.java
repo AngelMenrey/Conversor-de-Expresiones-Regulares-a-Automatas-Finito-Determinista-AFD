@@ -89,11 +89,11 @@ public class Automata {
 
     }
 
-    public void arrangeStates(int diameter) {
+    public void arrangeStates(int diameter, int rows) {
         if (head == null) {
             return;
         }
-
+    
         // Contar el número de estados
         int stateCount = 0;
         State currentState = head;
@@ -101,21 +101,31 @@ public class Automata {
             stateCount++;
             currentState = currentState.next;
         }
-
-        // Determinar el ángulo para espaciar los estados de forma circular
-        double angleStep = 2 * Math.PI / stateCount;
+    
+        // Calcular el número de columnas necesarias
+        int cols = (int) Math.ceil((double) stateCount / rows);
+    
+        // Espaciado entre los centros de los círculos
+        int spacing = diameter + 10; // 10 unidades de separación adicional
+    
+        // Asignar coordenadas (x, y) para cada estado
         currentState = head;
         int index = 0;
-
-        // Asignar coordenadas (x, y) a cada estado
+    
         while (currentState != null) {
-            double angle = angleStep * index;
-            currentState.x = (int) (diameter * Math.cos(angle)); // Cálculo de coordenada X
-            currentState.y = (int) (diameter * Math.sin(angle)); // Cálculo de coordenada Y
+            // Calcular fila y columna para el estado actual
+            int row = index / cols;  // División entera para obtener la fila
+            int col = index % cols;  // Resto para obtener la columna
+    
+            // Asignar coordenadas
+            currentState.x = col * spacing; // Posición x basada en la columna
+            currentState.y = row * spacing; // Posición y basada en la fila
+    
             index++;
             currentState = currentState.next;
         }
     }
+    
     
 
     public boolean evaluateStringAFD(String input) {
