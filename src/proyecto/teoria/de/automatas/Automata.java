@@ -142,24 +142,54 @@ public class Automata {
 
     public static void main(String[] args) {
         // Crear el autómata con transiciones lambda
-        Automata automata = new Automata("Lambda Automata", "expresión regular");
+        Automata automata = new Automata("Lambda Automata", "((a|b)(a|b)a(a|b)*b(a|b))|((b|a)(b|a)*b(b|a)*a(b|a))*");
 
         // Definir estados
-        State s0 = new State("q0", false);
+        State s0 = new State("q0", false); // Estado inicial
         State s1 = new State("q1", false);
-        State s2 = new State("q2", true); // Estado de aceptación
+        State s2 = new State("q2", false);
+        State s3 = new State("q3", false);
+        State s4 = new State("q4", false);
+        State s5 = new State("q5", false);
+        State s6 = new State("q6", false);
+        State s7 = new State("q7", false);
+        State s8 = new State("q8", true); // Estado final de aceptación
 
         // Agregar estados al autómata
         automata.addState(s0);
         automata.addState(s1);
         automata.addState(s2);
+        automata.addState(s3);
+        automata.addState(s4);
+        automata.addState(s5);
+        automata.addState(s6);
+        automata.addState(s7);
+        automata.addState(s8);
 
-        // Definir transiciones
-        s0.addTransition('a', s1);                // Transición normal con 'a'
-        s1.addTransition( s2);              // Transición lambda (null)
-        s1.addTransition('b', automata.findStateByName("q1")); // Bucle en 'b'
-        s2.addTransition('c', s2);               // Bucle en 'c'
+        // Definir transiciones para la primera parte ((a|b)(a|b)a(a|b)*b(a|b))
+        s0.addTransition( s1); // Lambda para elegir primera parte
+        s1.addTransition('a', s2);
+        s1.addTransition('b', s2);
+        s2.addTransition('a', s3);
+        s2.addTransition('b', s3);
+        s3.addTransition('a', s4);
+        s4.addTransition('a', s4); // Bucle en (a|b)*
+        s4.addTransition('b', s5);
+        s5.addTransition('a', s6);
+        s5.addTransition('b', s6);
+        s6.addTransition( s8); // Lambda al estado final
 
+        // Definir transiciones para la segunda parte ((b|a)(b|a)*b(b|a)*a(b|a))*
+        s0.addTransition( s7); // Lambda para elegir segunda parte
+        s7.addTransition('b', s7);
+        s7.addTransition('a', s7);
+        s7.addTransition('b', s7); // Bucle en (b|a)*
+        s7.addTransition('b', s7);
+        s7.addTransition('a', s7);
+        s7.addTransition( s8); // Lambda al estado final
+
+        // Definir bucles lambda para combinaciones de estados
+        s7.addTransition( s1); // Segunda parte puede regresar a la primera
         // Ciclo de pruebas con JOptionPane
         while (true) {
             String input = JOptionPane.showInputDialog(
@@ -314,3 +344,18 @@ public class Automata {
     
 
 }
+
+/*
+ * Cadenas aceptadas:
+abaa
+babab
+ababaa
+baaaa
+abababab
+Cadenas no aceptadas:
+abc (contiene caracteres no válidos)
+aaa (no cumple con la estructura)
+babba (estructura incorrecta)
+aaaa (estructura incorrecta)
+b (demasiado corta)
+ */
