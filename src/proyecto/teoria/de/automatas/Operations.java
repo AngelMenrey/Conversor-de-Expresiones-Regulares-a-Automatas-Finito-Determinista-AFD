@@ -149,7 +149,7 @@ public class Operations {
         return automatas.pop();
     }
 
-    public Automata processRegexSA(String regex) {
+    public Automata processRegexSA(String regex,StringBuilder logs) {
         if (regex == null || regex.isEmpty()) {
             return null;
         }
@@ -163,20 +163,25 @@ public class Operations {
             if (c == '(') {
                 operators.push(c);
             } else if (c == ')') {
-                System.out.println("sen encontro ')'");
+                logs.append("\nse encontro ')'");
+
+                if (!operators.isEmpty() && operators.peek() != '(') {
+                    
+                }
+
                 while (!operators.isEmpty() && operators.peek() != '(') {
-                    processSA(operators, automatas);
+                    processSA(operators, automatas,logs);
                 }
                 operators.pop(); // Quitar '('
                 
-                System.out.println("se cerro '('");
-                if (i+1<regex.length()&&0==precedence(regex.charAt(i+1))) {
-                    //operators.push('.');
+                logs.append("\nse cerro '('");
+                if (i+1<regex.length()&&(0==precedence(regex.charAt(i+1))||regex.charAt(i+1)=='(')) {
+                    operators.push('.');
                 }
                 
             } else if (c == '*') {
                 while (!operators.isEmpty() && precedence(operators.peek()) >= precedence(c)) {
-                    processSA(operators, automatas);
+                    processSA(operators, automatas,logs);
                 }
                 operators.push(c);
             }else if(c == '|'){
@@ -199,6 +204,7 @@ public class Operations {
 
                 }
                 automatas.push(a);
+                logs.append("\nSe creo el automata simple:"+a.name);
                 if (i+1<regex.length()&&(0==precedence(regex.charAt(i+1)))&&regex.charAt(i+1)!=')'
                 &&regex.charAt(i+1)!='(') {
                     operators.push('.');
@@ -208,6 +214,8 @@ public class Operations {
                     
                     a=createSA(c);
                     automatas.push(a);
+                    
+                logs.append("\nSe creo el automata simple:"+a.name+"separado por que algo lo opera");
 
                 }else if (i+1<regex.length()
                 &&regex.charAt(i+1)=='(') {
@@ -234,9 +242,10 @@ public class Operations {
 
         // Procesar el resto de la pila
         while (!operators.isEmpty()) {
-            processSA(operators, automatas);
+            processSA(operators, automatas,logs);
         }
-
+        
+        logs.append("\nSe culmino el automata");
         return automatas.pop();
     }
 
@@ -261,6 +270,7 @@ public class Operations {
         oldF.addTransition(c,s2);
         oldF.end=false;
         s2.end=true;
+        a.name=a.name+c;
 
 
     }
@@ -336,25 +346,33 @@ public class Operations {
         }
     }
 
-    private void processSA(Stack<Character> operators, Stack<Automata> automatas) {
+    private void processSA(Stack<Character> operators, Stack<Automata> automatas,StringBuilder logs) {
         char operator = operators.pop();
 
         if (operator == '*') {
             
             Automata a = automatas.pop();
+            logs.append("\noperacion: *, a:"+a.name);
             automatas.push(kleenSA(a));
+            
+            
             System.out.println("op: *, a:"+a.name);
         } else if (operator == '|') {
             Automata a2 = automatas.pop();
             Automata a1 = automatas.pop();
+            logs.append("\noperacion: |, a1:"+a1.name+", a2:"+a2.name);
             automatas.push(unionSA(a1, a2));
             
-            System.out.println("op: |, a1:"+a1.name+", a1:"+a2.name);
+            //System.out.println("op: |, a1:"+a1.name+", a2:"+a2.name);
         } else if (operator == '.') {
             Automata a2 = automatas.pop();
             Automata a1 = automatas.pop();
+            logs.append("\nop: ., a1:"+a1.name+", a2:"+a2.name);
             automatas.push(concate(a1, a2));
-            System.out.println("op: ., a1:"+a1.name+", a1:"+a2.name);
+            //System.out.println("op: ., a1:"+a1.name+", a2"+a2.name);
+        }else{
+            Automata a=automatas.peek();
+            logs.append("\nno se encontro una operacion valida pero si existe el automata:"+a.name);
         }
     }
 
@@ -407,14 +425,17 @@ public class Operations {
             return;
         }
 
+        StringBuilder logs=new StringBuilder("");
+
         // Generar el autómata
-        Automata automata = operations.processRegexSA(regex);
+        Automata automata = operations.processRegexSA(regex,logs);
         if (automata == null) {
             JOptionPane.showMessageDialog(null, "Error al generar el autómata.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
         automata.nameStates();
         automata.getFinalState().name="final";
+        System.out.println(logs);
         automata.displayAutomata();
 
         // Ciclo para probar cadenas
