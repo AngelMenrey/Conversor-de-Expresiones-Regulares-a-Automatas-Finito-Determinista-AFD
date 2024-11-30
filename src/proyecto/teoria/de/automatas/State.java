@@ -23,8 +23,9 @@ public class State {
         next=null;
     }
 
-    public void addTransition(char path, String stateName) {
+    public void addTransition(Character path, State stateName) {
         TransF newTransition = new TransF(path, stateName);
+
         if (transHead == null) {
             transHead = newTransition;
         } else {
