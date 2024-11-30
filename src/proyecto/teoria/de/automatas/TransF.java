@@ -19,5 +19,11 @@ public class TransF {
         next=null;
 
     }
+
+    public TransF(State state) {
+        this.path = null; // Transición lambda
+        this.state = state;
+        this.next = null;
+    }
     
 }

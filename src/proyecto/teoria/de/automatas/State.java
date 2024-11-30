@@ -36,4 +36,20 @@ public class State {
             temp.next = newTransition;
         }
     }
+    public void addTransition(State s2) {
+        // TODO Auto-generated method stub
+
+        TransF newTransition = new TransF( s2);
+
+        if (transHead == null) {
+            transHead = newTransition;
+        } else {
+            TransF temp = transHead;
+            while (temp.next != null) {
+                temp = temp.next;
+            }
+            temp.next = newTransition;
+        }
+        
+    }
 }

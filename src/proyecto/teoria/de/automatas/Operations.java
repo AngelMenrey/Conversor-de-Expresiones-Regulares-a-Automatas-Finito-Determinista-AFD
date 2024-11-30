@@ -19,7 +19,7 @@ public class Operations {
             State finalState = result.getFinalState();
             if (finalState != null) {
                 finalState.end = false; // Deja de ser final al unirse con otro autómata
-                finalState.addTransition(null, next.head); // Conexión con transición vacía (lambda)
+                finalState.addTransition( next.head); // Conexión con transición vacía (lambda)
             }
     
             // Conectar los estados del segundo autómata al primero
@@ -46,13 +46,13 @@ public class Operations {
             Automata current = automatas.pop();
             if (current.head != null) {
                 // Conectar el nuevo inicio a los inicios de cada autómata con transición lambda
-                newStart.addTransition(null, current.head);
+                newStart.addTransition( current.head);
     
                 // Encontrar los estados finales del autómata actual y conectarlos al nuevo final
                 State finalState = current.getFinalState();
                 if (finalState != null) {
                     finalState.end = false; // Dejar de marcarlo como final
-                    finalState.addTransition(null, newFinal); // Transición lambda hacia el nuevo estado final
+                    finalState.addTransition( newFinal); // Transición lambda hacia el nuevo estado final
                 }
             }
         }
@@ -80,12 +80,12 @@ public class Operations {
         State oldFinal = automata.getFinalState();
         if (oldFinal != null) {
             oldFinal.end = false; // Ya no es final
-            oldFinal.addTransition(null, automata.head); // Ciclo para repeticiones
-            oldFinal.addTransition(null, newEnd); // Conexión al nuevo estado final
+            oldFinal.addTransition( automata.head); // Ciclo para repeticiones
+            oldFinal.addTransition( newEnd); // Conexión al nuevo estado final
         }
     
-        newStart.addTransition(null, automata.head); // Conexión al autómata original
-        newStart.addTransition(null, newEnd); // Conexión al estado final para permitir vacío
+        newStart.addTransition( automata.head); // Conexión al autómata original
+        newStart.addTransition( newEnd); // Conexión al estado final para permitir vacío
     
         result.head= newStart;
         result.addState(newEnd);
@@ -106,8 +106,8 @@ public class Operations {
         State oldFinal = automata.getFinalState();
         if (oldFinal != null) {
             oldFinal.end = false; // Ya no es final
-            oldFinal.addTransition(null, automata.head); // Ciclo para repeticiones
-            oldFinal.addTransition(null, newEnd); // Conexión al nuevo estado final
+            oldFinal.addTransition( automata.head); // Ciclo para repeticiones
+            oldFinal.addTransition(newEnd); // Conexión al nuevo estado final
         }
     
         newStart.addTransition(null, automata.head); // Conexión al autómata original
