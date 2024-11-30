@@ -6,6 +6,17 @@ import javax.swing.JOptionPane;
 
 public class Operations {
 
+    public Automata concatSA(Automata a1, Automata a2){
+        if (a1 == null || a2 == null) {
+            return null;
+        }
+        State a1Final=a1.getFinalState();
+        a1Final.end=false;
+        a1Final.addTransition(a2.head);
+        a1.addState(a2.head);
+        return a1;
+    }
+
     // Concatenación de dos autómatas con un solo estado final
     public Automata concate(Automata a1, Automata a2) {
         if (a1 == null || a2 == null) {
@@ -28,7 +39,9 @@ public class Operations {
         }
 
         result.head = a1.head; // El inicio del autómata es el del primero
+        result.addState(a2.head);
         result.addState(newFinal);
+        
         return result;
     }
 
@@ -136,6 +149,172 @@ public class Operations {
         return automatas.pop();
     }
 
+    public Automata processRegexSA(String regex) {
+        if (regex == null || regex.isEmpty()) {
+            return null;
+        }
+
+        Stack<Character> operators = new Stack<>();
+        Stack<Automata> automatas = new Stack<>();
+
+        for (int i = 0; i < regex.length(); i++) {
+            char c = regex.charAt(i);
+
+            if (c == '(') {
+                operators.push(c);
+            } else if (c == ')') {
+                System.out.println("sen encontro ')'");
+                while (!operators.isEmpty() && operators.peek() != '(') {
+                    processSA(operators, automatas);
+                }
+                operators.pop(); // Quitar '('
+                
+                System.out.println("se cerro '('");
+                if (i+1<regex.length()&&0==precedence(regex.charAt(i+1))) {
+                    //operators.push('.');
+                }
+                
+            } else if (c == '*') {
+                while (!operators.isEmpty() && precedence(operators.peek()) >= precedence(c)) {
+                    processSA(operators, automatas);
+                }
+                operators.push(c);
+            }else if(c == '|'){
+                operators.push(c);
+            }else if(c == '.'){
+                operators.push(c);
+            } else {
+                // Crear autómata para un símbolo y añadir al stack
+                Automata a=createSA(c);
+                while(i+1<regex.length()&&(0==precedence(regex.charAt(i+1))&&('('!=regex.charAt(i+1)))
+                &&(i+2<regex.length()&&(0==precedence(regex.charAt(i+2)))&&('('!=regex.charAt(i+2)))
+                &&regex.charAt(i+1)!=')'){
+                    i++;
+                    c=regex.charAt(i);
+                    //if (i+1<regex.length()&&(0==precedence(regex.charAt(i+1)))) {
+                        addToSA(a, c);
+                    //}
+
+                    
+
+                }
+                automatas.push(a);
+                if (i+1<regex.length()&&(0==precedence(regex.charAt(i+1)))&&regex.charAt(i+1)!=')'
+                &&regex.charAt(i+1)!='(') {
+                    operators.push('.');
+                
+                    i++;
+                    c=regex.charAt(i);
+                    
+                    a=createSA(c);
+                    automatas.push(a);
+
+                }else if (i+1<regex.length()
+                &&regex.charAt(i+1)=='(') {
+                  
+                    operators.push('.');  
+                }
+
+                
+
+                /*
+                 * Automata single = new Automata("Symbol_" + c, String.valueOf(c));
+                State start = new State("q_start", false);
+                State end = new State("q_end", true);
+                start.addTransition(c, end);
+                single.addState(start);
+                single.addState(end);
+                single.head = start;
+                automatas.push(single);
+                 */
+                
+
+            }
+        }
+
+        // Procesar el resto de la pila
+        while (!operators.isEmpty()) {
+            processSA(operators, automatas);
+        }
+
+        return automatas.pop();
+    }
+
+    public Automata createSA(char c){
+
+        Automata a=new Automata("sa_"+c, null);
+
+        State s1=new State("s", false);
+        State s2=new State("s", true);
+        s1.addTransition(c, s2);
+        a.addState(s1);
+        a.addState(s2);
+        return a;
+
+    }
+
+    public void addToSA(Automata a,char c){
+        
+        State s2=new State("s", false);
+        a.addState(s2);
+        State oldF=a.getFinalState();
+        oldF.addTransition(c,s2);
+        oldF.end=false;
+        s2.end=true;
+
+
+    }
+
+    public Automata unionSA(Automata a1,Automata a2){
+        State newStart=new State("s", false);
+
+        newStart.addTransition(a1.head);
+        newStart.addTransition(a2.head);
+        State olda1FState=a1.getFinalState();
+        State olda2FState=a2.getFinalState();
+
+        if (olda1FState==null || olda2FState==null) {
+            return null;
+        }
+
+        State newF=new State("sf", true);
+        olda1FState.addTransition(newF);
+        olda2FState.addTransition(newF);
+        olda1FState.end=false;
+        olda2FState.end=false;
+        
+        a1.addState(a2.head);
+        a1.addState(newF);
+        newStart.next=a1.head;
+
+        a1.head=newStart;
+        //a1.nameStates();
+        return a1;
+    }
+
+    public Automata kleenSA(Automata a){
+        State finals=a.getFinalState();
+        if (finals==null) {
+            return null;
+        }
+        a.head.addTransition(finals);
+        finals.addTransition(a.head);
+        a.name=a.name+"_kleen";
+
+        return a;
+    }
+
+    public Automata plusKleenSA(Automata a){
+        State finals=a.getFinalState();
+        if (finals==null) {
+            return null;
+        }
+        finals.addTransition(a.head);
+
+
+        return a;
+    }
+
     // Procesar autómatas según el operador
     private void processAutomata(Stack<Character> operators, Stack<Automata> automatas) {
         char operator = operators.pop();
@@ -143,14 +322,39 @@ public class Operations {
         if (operator == '*') {
             Automata a = automatas.pop();
             automatas.push(kleeneStar(a));
+            System.out.println("op: *, a:"+a.name);
         } else if (operator == '|') {
             Automata a2 = automatas.pop();
             Automata a1 = automatas.pop();
             automatas.push(union(a1, a2));
+            System.out.println("op: |, a1:"+a1.name+", a1:"+a2.name);
+        } else if (operator == '.') {
+            Automata a2 = automatas.pop();
+            Automata a1 = automatas.pop();
+            automatas.push(concatSA(a1, a2));
+            System.out.println("op: |, a1:"+a1.name+", a1:"+a2.name);
+        }
+    }
+
+    private void processSA(Stack<Character> operators, Stack<Automata> automatas) {
+        char operator = operators.pop();
+
+        if (operator == '*') {
+            
+            Automata a = automatas.pop();
+            automatas.push(kleenSA(a));
+            System.out.println("op: *, a:"+a.name);
+        } else if (operator == '|') {
+            Automata a2 = automatas.pop();
+            Automata a1 = automatas.pop();
+            automatas.push(unionSA(a1, a2));
+            
+            System.out.println("op: |, a1:"+a1.name+", a1:"+a2.name);
         } else if (operator == '.') {
             Automata a2 = automatas.pop();
             Automata a1 = automatas.pop();
             automatas.push(concate(a1, a2));
+            System.out.println("op: ., a1:"+a1.name+", a1:"+a2.name);
         }
     }
 
@@ -204,11 +408,14 @@ public class Operations {
         }
 
         // Generar el autómata
-        Automata automata = operations.processRegex(regex);
+        Automata automata = operations.processRegexSA(regex);
         if (automata == null) {
             JOptionPane.showMessageDialog(null, "Error al generar el autómata.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
+        automata.nameStates();
+        automata.getFinalState().name="final";
+        automata.displayAutomata();
 
         // Ciclo para probar cadenas
         boolean continuar = true;

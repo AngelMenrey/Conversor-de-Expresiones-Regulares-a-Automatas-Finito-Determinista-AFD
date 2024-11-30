@@ -13,6 +13,41 @@ public class Automata {
     public String regex;
     public boolean afnl=true;
 
+    public void displayAutomata() {
+        if (head == null) {
+            System.out.println("El autómata está vacío.");
+            return;
+        }
+    
+        State currentState = head;
+        while (currentState != null) {
+            // Imprimir el estado actual
+            StringBuilder output = new StringBuilder(currentState.name + ":");
+            
+            // Recorrer las transiciones de este estado
+            TransF transition = currentState.transHead;
+            while (transition != null) {
+                output.append(transition.path)
+                      .append("->")
+                      .append(transition.state.name)
+                      .append(", ");
+                transition = transition.next;
+            }
+    
+            // Eliminar la coma y el espacio extra al final, si hay transiciones
+            if (output.toString().endsWith(", ")) {
+                output.setLength(output.length() - 2);
+            }
+    
+            // Mostrar el resultado
+            System.out.println(output);
+    
+            // Ir al siguiente estado
+            currentState = currentState.next;
+        }
+    }
+    
+
     public State getFinalState(){
         if(!afnl){
             return null;
@@ -47,7 +82,7 @@ public class Automata {
         this.name=name;
         this.regex=regex;
         head=null;
-        get_alpha_from_regex();
+        //get_alpha_from_regex();
     }
 
     public void addState(State newState) {
@@ -196,7 +231,7 @@ public class Automata {
     }
     //esta clase se va a usar para evaluar expreciones regulares
 
-    public static void main(String[] args) {
+    public static void mainD(String[] args) {
         // Crear el autómata con transiciones lambda
         Automata automata = new Automata("Lambda Automata", "((a|b)(a|b)a(a|b)*b(a|b))|((b|a)(b|a)*b(b|a)*a(b|a))*");
 
@@ -281,19 +316,24 @@ public class Automata {
 
 
 
-    public static void mainD(String[] args) {
+    public static void main(String[] args) {
         Automata automata = new Automata("nombre del automata", "expresion regular");
 
         State s0 = new State("q0", false);
+        State sm=new State("qm", false);
         State s1 = new State("q1", true);
 
         automata.addState(s0);
+        automata.addState(sm);
         automata.addState(s1);
 
-        s0.addTransition('a', automata.findStateByName("q0"));
-        s0.addTransition('b', automata.findStateByName("q1"));
-        s1.addTransition('b', automata.findStateByName("q1"));
-        s1.addTransition('a', automata.findStateByName("q0"));
+        s0.addTransition('a', automata.findStateByName("qm"));
+        sm.addTransition('a',s1);
+        //s0.addTransition('b', automata.findStateByName("q1"));
+        //s1.addTransition('b', automata.findStateByName("q1"));
+        //s1.addTransition('a', automata.findStateByName("q0"));
+
+        automata.displayAutomata();
 
         
 
