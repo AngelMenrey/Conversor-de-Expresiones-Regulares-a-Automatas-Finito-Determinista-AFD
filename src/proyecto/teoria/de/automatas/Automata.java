@@ -70,6 +70,52 @@ public class Automata {
             temp.next = newState;
         }
     }
+
+    public void nameStates(){
+        if (head == null) {
+            return;
+        }
+
+        int stateCount = 0;
+        State currentState = head;
+
+        while (currentState != null) {
+            currentState.name="q"+(stateCount++);
+            if (currentState.end) {
+                currentState.name=currentState.name+"F";
+            }
+            currentState = currentState.next;
+        }
+
+    }
+
+    public void arrangeStates(int diameter) {
+        if (head == null) {
+            return;
+        }
+
+        // Contar el número de estados
+        int stateCount = 0;
+        State currentState = head;
+        while (currentState != null) {
+            stateCount++;
+            currentState = currentState.next;
+        }
+
+        // Determinar el ángulo para espaciar los estados de forma circular
+        double angleStep = 2 * Math.PI / stateCount;
+        currentState = head;
+        int index = 0;
+
+        // Asignar coordenadas (x, y) a cada estado
+        while (currentState != null) {
+            double angle = angleStep * index;
+            currentState.x = (int) (diameter * Math.cos(angle)); // Cálculo de coordenada X
+            currentState.y = (int) (diameter * Math.sin(angle)); // Cálculo de coordenada Y
+            index++;
+            currentState = currentState.next;
+        }
+    }
     
 
     public boolean evaluateStringAFD(String input) {
