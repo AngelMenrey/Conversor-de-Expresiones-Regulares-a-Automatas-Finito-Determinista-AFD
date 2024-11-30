@@ -183,19 +183,33 @@ public class Operations {
                 operators.pop(); // Quitar '('
                 
                 logs.append("\nse cerro '('");
-                if (i+1<regex.length()&&(0==precedence(regex.charAt(i+1))||regex.charAt(i+1)=='(')) {
+                if (i+1<regex.length()&&((0==precedence(regex.charAt(i+1))||regex.charAt(i+1)=='('))&&regex.charAt(i+1)==')') {
+                    
+                    
+                  logs.append("\nse agrego un . implicito cierre de parentesis ");
                     operators.push('.');
                 }
                 
             } else if (c == '*') {
-                while (!operators.isEmpty() && precedence(operators.peek()) >= precedence(c)) {
+                operators.push(c);
+                
+                processSA(operators, automatas,logs);
+                while (!operators.isEmpty() && precedence(operators.peek()) == precedence('|')&&operators.peek()!='(') {
                     processSA(operators, automatas,logs);
                 }
-                operators.push(c);
+                if (i+1<regex.length()&&(0==precedence(regex.charAt(i+1))||regex.charAt(i+1)=='(')&&regex.charAt(i+1)!=')') {
+                    
+                  logs.append("\nse agrego un . implicito tras estrella de kleen");
+                    operators.push('.');
+                }
+                
+                //operators.push(c);
             }else if(c == '|'){
                 operators.push(c);
             }else if(c == '.'){
                 operators.push(c);
+                
+                logs.append("\nse agrego un . no implicito ");
             } else {
                 // Crear autómata para un símbolo y añadir al stack
                 Automata a=createSA(c);
@@ -215,6 +229,8 @@ public class Operations {
                 logs.append("\nSe creo el automata simple:"+a.name);
                 if (i+1<regex.length()&&(0==precedence(regex.charAt(i+1)))&&regex.charAt(i+1)!=')'
                 &&regex.charAt(i+1)!='(') {
+                    
+                    logs.append("\nse agrego un . implicito simple automata 1 ");
                     operators.push('.');
                 
                     i++;
@@ -223,11 +239,11 @@ public class Operations {
                     a=createSA(c);
                     automatas.push(a);
                     
-                logs.append("\nSe creo el automata simple:"+a.name+"separado por que algo lo opera");
+                logs.append("\nSe creo el automata simple:"+a.name+" separado por que algo lo opera o es el ultimo automata");
 
                 }else if (i+1<regex.length()
                 &&regex.charAt(i+1)=='(') {
-                  
+                  logs.append("\nse agrego un . implicito simple automata 2");
                     operators.push('.');  
                 }
 
@@ -249,6 +265,7 @@ public class Operations {
         }
 
         // Procesar el resto de la pila
+        logs.append("\nSe procesaran los restantes");
         while (!operators.isEmpty()) {
             processSA(operators, automatas,logs);
         }
@@ -317,7 +334,6 @@ public class Operations {
         }
         a.head.addTransition(finals);
         finals.addTransition(a.head);
-        a.name=a.name+"_kleen";
 
         return a;
     }
@@ -360,23 +376,37 @@ public class Operations {
         if (operator == '*') {
             
             Automata a = automatas.pop();
-            logs.append("\noperacion: *, a:"+a.name);
+            logs.append("\noperacion: '*', a:"+a.name);
             automatas.push(kleenSA(a));
             
+            automatas.peek().name=a.name+"_kleen";
             
-            System.out.println("op: *, a:"+a.name);
+            //System.out.println("op: s, a:"+a.name);
         } else if (operator == '|') {
+            if(automatas.size()<2){
+                logs.append("\nse encontro un error y hay mas operadores | de los que se necesitan");
+                return ;
+            }
             Automata a2 = automatas.pop();
             Automata a1 = automatas.pop();
-            logs.append("\noperacion: |, a1:"+a1.name+", a2:"+a2.name);
+            logs.append("\noperacion: '|', a1:"+a1.name+", a2:"+a2.name);
             automatas.push(unionSA(a1, a2));
             
+            automatas.peek().name=a1.name+"|"+a2.name;
             //System.out.println("op: |, a1:"+a1.name+", a2:"+a2.name);
         } else if (operator == '.') {
+            if(automatas.size()<2){
+                logs.append("\nse encontro un error y hay mas operadores . de los que se necesitan");
+                return ;
+            }
             Automata a2 = automatas.pop();
             Automata a1 = automatas.pop();
-            logs.append("\nop: ., a1:"+a1.name+", a2:"+a2.name);
+            
+            logs.append("\nop: '.', a1:"+a1.name+", a2:"+a2.name);
             automatas.push(concate(a1, a2));
+            logs.append("\nse concluyo la concatenacions");
+
+            //automatas.peek().name=a1.name+"."+a2.name;
             //System.out.println("op: ., a1:"+a1.name+", a2"+a2.name);
         }else{
             Automata a=automatas.peek();
@@ -436,7 +466,14 @@ public class Operations {
         StringBuilder logs=new StringBuilder("");
 
         // Generar el autómata
-        Automata automata = operations.processRegexSA(regex,logs);
+        Automata automata=null;
+        try{
+             automata = operations.processRegexSA(regex,logs);
+        }catch(Exception e){
+            System.out.println(logs);
+            throw(e);
+        }
+        
         if (automata == null) {
             JOptionPane.showMessageDialog(null, "Error al generar el autómata.", "Error", JOptionPane.ERROR_MESSAGE);
             return;

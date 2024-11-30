@@ -13,6 +13,43 @@ public class Automata {
     public String regex;
     public boolean afnl=true;
 
+    public void displayAutomata(StringBuilder output) {
+        if (head == null) {
+            System.out.println("El autómata está vacío.");
+            return;
+        }
+        output.append("\n");
+    
+        State currentState = head;
+        while (currentState != null) {
+            // Imprimir el estado actual
+            output.append(currentState.name + ":");
+            
+            // Recorrer las transiciones de este estado
+            TransF transition = currentState.transHead;
+            while (transition != null) {
+                output.append(transition.path)
+                      .append("->")
+                      .append(transition.state.name)
+                      .append(", ");
+                transition = transition.next;
+            }
+    
+            // Eliminar la coma y el espacio extra al final, si hay transiciones
+            if (output.toString().endsWith(", ")) {
+                output.setLength(output.length() - 2);
+            }
+            output.append("\n");
+    
+            // Mostrar el resultado
+            //
+    
+            // Ir al siguiente estado
+            currentState = currentState.next;
+        }
+        System.out.println(output);
+    }
+
     public void displayAutomata() {
         if (head == null) {
             System.out.println("El autómata está vacío.");

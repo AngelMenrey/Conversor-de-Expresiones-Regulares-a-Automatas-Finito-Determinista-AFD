@@ -9,7 +9,14 @@ import javax.imageio.ImageIO;
 
 public class ERAFD extends JFrame {
 
+    private StringBuilder process;
+    private Operations operations;
+    private Automata displayA;
+
     public ERAFD() {
+        process=new StringBuilder("");
+        operations=new Operations();
+
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -81,6 +88,43 @@ public class ERAFD extends JFrame {
         });
 
         botonCaptura.addActionListener(e -> capturarPantalla());
+
+        botonERaAFD.addActionListener(e->{
+            String regex = JOptionPane.showInputDialog(this, "Ingrese una expresión regular:", "Generar Autómata", JOptionPane.PLAIN_MESSAGE);
+            if (!operations.isValidRegex(regex)) {
+                JOptionPane.showMessageDialog(this, "La expresión regular no es válida.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            process.setLength(0);
+            
+            process.append(String.format("""
+                    Logs/proceso de transformacion
+                    %s
+                    regex ->AFD-Lambda
+                    \n
+                    """,regex));
+
+            
+            displayA = operations.processRegexSA(regex,process);
+            if (displayA == null) {
+                JOptionPane.showMessageDialog(null, "Error al generar el autómata.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            displayA.nameStates();
+            displayA.getFinalState().name="final";
+            displayA.displayAutomata(process);
+            displayA.arrangeStates(50, 10);
+        });
+        botonPasos.addActionListener(e->{
+            JTextArea textArea = new JTextArea(process.toString());
+            textArea.setEditable(false);
+            JScrollPane scrollPane = new JScrollPane(textArea);
+            scrollPane.setPreferredSize(new Dimension(500, 400));
+            if (process.length()<3) {
+                return;
+            }
+            JOptionPane.showMessageDialog(this, scrollPane, "Proceso de Transformación", JOptionPane.INFORMATION_MESSAGE);
+        });
 
         setContentPane(panelConFondo);
     }
