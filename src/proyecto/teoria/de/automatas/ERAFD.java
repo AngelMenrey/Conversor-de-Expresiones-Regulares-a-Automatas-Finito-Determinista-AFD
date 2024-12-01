@@ -18,6 +18,7 @@ public class ERAFD extends JFrame {
     private JLabel automataLabel;
     private Point initialClick;
 
+    //Clase determinar la vista grafica principal
     public ERAFD() {
         process = new StringBuilder("");
         operations = new Operations();

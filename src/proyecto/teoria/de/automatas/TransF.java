@@ -1,5 +1,5 @@
 package proyecto.teoria.de.automatas;
-
+//Plantilla para las transiciones
 public class TransF {
     public Character path;
     public String stateName;

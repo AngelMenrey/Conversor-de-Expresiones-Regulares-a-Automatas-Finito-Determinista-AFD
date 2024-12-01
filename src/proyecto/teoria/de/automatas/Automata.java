@@ -51,6 +51,7 @@ public class Automata {
         System.out.println(output);
     }
 
+    //Funcion para determinar si hay un automata
     public void displayAutomata() {
         if (head == null) {
             System.out.println("El autómata está vacío.");
@@ -85,7 +86,7 @@ public class Automata {
         }
     }
     
-
+    //Funcion para obtener el ultimo estado
     public State getFinalState(){
         if(!afnl){
             return null;
@@ -115,14 +116,14 @@ public class Automata {
     }
 
     
-    
+    //Funcion para obtener el automata
     public Automata(String name,String regex){
         this.name=name;
         this.regex=regex;
         head=null;
         //get_alpha_from_regex();
     }
-
+    //Funcion para agregar estados
     public void addState(State newState) {
         if (head == null) {
             head = newState;
@@ -143,7 +144,7 @@ public class Automata {
             temp.next = newState;
         }
     }
-
+    //Funcion para nombrar estados
     public void nameStates(){
         if (head == null) {
             return;
@@ -161,7 +162,7 @@ public class Automata {
         }
 
     }
-
+    //Funcion para medir estados
     public void arrangeStates(int diameter, int rows) {
         if (head == null) {
             return;
@@ -199,8 +200,7 @@ public class Automata {
         }
     }
     
-    
-
+    //Funcion para evaluar los string del AFD
     public boolean evaluateStringAFD(String input) {
         State currentState = head;
         int i = 0;
@@ -217,7 +217,7 @@ public class Automata {
                     foundTransition = true;
                     break;
                 }
-                transition = transition.next;
+                transition = transition.next;//Pasar a la siguiente transicion
             }
 
             if (!foundTransition) {

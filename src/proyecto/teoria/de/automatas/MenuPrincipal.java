@@ -5,7 +5,7 @@ import java.awt.*;
 import java.awt.image.*;
 import java.io.*;
 import javax.imageio.ImageIO;
-
+//Declaracion de clase para el menu principal
 public class MenuPrincipal extends JFrame {
 
     private JPanel panelConFondo;
