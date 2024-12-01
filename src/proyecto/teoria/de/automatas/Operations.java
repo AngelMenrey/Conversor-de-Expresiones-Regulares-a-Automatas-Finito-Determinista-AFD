@@ -220,7 +220,9 @@ public class Operations {
                         && (i + 2 < regex.length() && (0 == precedence(regex.charAt(i + 2)))
                                 && ('(' != regex.charAt(i + 2)))
                         && regex.charAt(i + 1) != ')'
-                        && (i > 0 && regex.charAt(i - 1) != '|')) {
+                        /**/
+                        && !(i > 0 && regex.charAt(i - 1) == '|')
+                        ) {
                     i++;
                     c = regex.charAt(i);
                     // if (i+1<regex.length()&&(0==precedence(regex.charAt(i+1)))) {

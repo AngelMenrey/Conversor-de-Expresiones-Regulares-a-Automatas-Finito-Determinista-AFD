@@ -125,6 +125,28 @@ public class ERAFD extends JFrame {
             }
             JOptionPane.showMessageDialog(this, scrollPane, "Proceso de Transformación", JOptionPane.INFORMATION_MESSAGE);
         });
+        botonCadena.addActionListener(e->{
+            if (displayA==null) {
+                JOptionPane.showMessageDialog(this, "no hay automata, por favor introduzca una exprecion regular");
+                return;
+            }
+            boolean continuar = true;
+        while (continuar) {
+            String testString = JOptionPane.showInputDialog(null,
+                    "Ingrese una cadena para evaluar (o escriba 'salir' para terminar):", "Probar Autómata",
+                    JOptionPane.PLAIN_MESSAGE);
+
+            if (testString == null || testString.equalsIgnoreCase("salir")) {
+                continuar = false;
+            } else {
+                boolean result = displayA.evaluateString(testString); // Suponiendo que tienes un método `evaluate` en
+                                                                      // Automata
+                String message = result ? "La cadena es aceptada por el autómata."
+                        : "La cadena no es aceptada por el autómata.";
+                JOptionPane.showMessageDialog(null, message, "Resultado", JOptionPane.INFORMATION_MESSAGE);
+            }
+        }
+        });
 
         setContentPane(panelConFondo);
     }
