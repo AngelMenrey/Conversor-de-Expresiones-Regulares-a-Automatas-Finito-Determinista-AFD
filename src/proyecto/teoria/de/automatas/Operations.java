@@ -213,9 +213,11 @@ public class Operations {
             } else {
                 // Crear autómata para un símbolo y añadir al stack
                 Automata a=createSA(c);
+                
                 while(i+1<regex.length()&&(0==precedence(regex.charAt(i+1))&&('('!=regex.charAt(i+1)))
                 &&(i+2<regex.length()&&(0==precedence(regex.charAt(i+2)))&&('('!=regex.charAt(i+2)))
-                &&regex.charAt(i+1)!=')'){
+                &&regex.charAt(i+1)!=')'
+                &&(i>0&&regex.charAt(i-1)!='|')){
                     i++;
                     c=regex.charAt(i);
                     //if (i+1<regex.length()&&(0==precedence(regex.charAt(i+1)))) {
@@ -226,6 +228,11 @@ public class Operations {
 
                 }
                 automatas.push(a);
+                if (i>0&&regex.charAt(i-1)=='|') {
+                    if (!operators.isEmpty()&&precedence(operators.peek())==precedence('|')) {
+                        processSA(operators, automatas,logs);
+                    }
+                }
                 logs.append("\nSe creo el automata simple:"+a.name);
                 if (i+1<regex.length()&&(0==precedence(regex.charAt(i+1)))&&regex.charAt(i+1)!=')'
                 &&regex.charAt(i+1)!='(') {
