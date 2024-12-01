@@ -469,6 +469,7 @@ public class Operations {
     // Método main
     public static void main(String[] args) {
         Operations operations = new Operations();
+        determinate det=new determinate();
 
         // Pedir expresión regular
         String regex = JOptionPane.showInputDialog(null, "Ingrese una expresión regular:", "Generar Autómata",
@@ -496,8 +497,9 @@ public class Operations {
             JOptionPane.showMessageDialog(null, "Error al generar el autómata.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
+        det.convertAFNLToAFN(automata);
         automata.nameStates();
-        automata.getFinalState().name = "final";
+        //automata.getFinalState().name = "final";
         System.out.println(logs);
         automata.displayAutomata();
 
