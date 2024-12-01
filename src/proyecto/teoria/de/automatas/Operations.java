@@ -230,7 +230,7 @@ public class Operations {
                 }
                 automatas.push(a);
                 boolean check = false;
-                if (i > 0 && regex.charAt(i - 1) == '|') {
+                if (i > 0 && regex.charAt(i - 1) == '|'&&!(i + 1 < regex.length() && ( '*'==regex.charAt(i + 1)))) {
                     if (!operators.isEmpty() && precedence(operators.peek()) == precedence('|')) {
                         processSA(operators, automatas, logs);
                         check = true;
