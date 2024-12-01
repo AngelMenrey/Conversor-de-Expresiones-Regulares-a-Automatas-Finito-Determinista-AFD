@@ -2,6 +2,9 @@ package proyecto.teoria.de.automatas;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -12,10 +15,12 @@ public class ERAFD extends JFrame {
     private StringBuilder process;
     private Operations operations;
     private Automata displayA;
+    private JLabel automataLabel;
+    private Point initialClick;
 
     public ERAFD() {
-        process=new StringBuilder("");
-        operations=new Operations();
+        process = new StringBuilder("");
+        operations = new Operations();
 
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -63,8 +68,8 @@ public class ERAFD extends JFrame {
 
         int buttonWidth = 120;
         int buttonHeight = 40;
-        int buttonY = 15; 
-        int spacing = 10; 
+        int buttonY = 15;
+        int spacing = 10;
 
         botonERaAFD.setBounds(10, buttonY, buttonWidth, buttonHeight);
         botonCadena.setBounds(10 + buttonWidth + spacing, buttonY, buttonWidth, buttonHeight);
@@ -80,6 +85,34 @@ public class ERAFD extends JFrame {
         panelConFondo.add(botonPasos);
         panelConFondo.add(botonCaptura);
 
+        automataLabel = new JLabel("", SwingConstants.CENTER);
+        automataLabel.setBounds(10, buttonY + buttonHeight + spacing + 50, 760, 400);
+        automataLabel.setVerticalAlignment(SwingConstants.TOP);
+        panelConFondo.add(automataLabel);
+
+        automataLabel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                initialClick = e.getPoint();
+                getComponentAt(initialClick);
+            }
+        });
+
+        automataLabel.addMouseMotionListener(new MouseMotionAdapter() {
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                int thisX = automataLabel.getLocation().x;
+                int thisY = automataLabel.getLocation().y;
+
+                int xMoved = e.getX() - initialClick.x;
+                int yMoved = e.getY() - initialClick.y;
+
+                int X = thisX + xMoved;
+                int Y = thisY + yMoved;
+                automataLabel.setLocation(X, Y);
+            }
+        });
+
         botonFuentes.addActionListener(e -> mostrarFuentes());
 
         botonRegresar.addActionListener(e -> {
@@ -89,63 +122,72 @@ public class ERAFD extends JFrame {
 
         botonCaptura.addActionListener(e -> capturarPantalla());
 
-        botonERaAFD.addActionListener(e->{
+        botonERaAFD.addActionListener(e -> {
             String regex = JOptionPane.showInputDialog(this, "Ingrese una expresión regular:", "Generar Autómata", JOptionPane.PLAIN_MESSAGE);
             if (!operations.isValidRegex(regex)) {
                 JOptionPane.showMessageDialog(this, "La expresión regular no es válida.", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
             process.setLength(0);
-            
+
             process.append(String.format("""
                     Logs/proceso de transformacion
                     %s
                     regex ->AFD-Lambda
                     \n
-                    """,regex));
+                    """, regex));
 
-            
-            displayA = operations.processRegexSA(regex,process);
+            displayA = operations.processRegexSA(regex, process);
             if (displayA == null) {
                 JOptionPane.showMessageDialog(null, "Error al generar el autómata.", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
             displayA.nameStates();
-            displayA.getFinalState().name="final";
+            displayA.getFinalState().name = "final";
             displayA.displayAutomata(process);
             displayA.arrangeStates(50, 10);
+
+            // Update the automata label
+            String processText = process.toString();
+            int index = processText.indexOf("Se culmino el automata");
+            if (index != -1) {
+                processText = processText.substring(index + "Se culmino el automata".length());
+            }
+            automataLabel.setText("<html>" + processText.replace("\n", "<br>") + "</html>");
         });
-        botonPasos.addActionListener(e->{
+
+        botonPasos.addActionListener(e -> {
             JTextArea textArea = new JTextArea(process.toString());
             textArea.setEditable(false);
             JScrollPane scrollPane = new JScrollPane(textArea);
             scrollPane.setPreferredSize(new Dimension(500, 400));
-            if (process.length()<3) {
+            if (process.length() < 3) {
                 return;
             }
             JOptionPane.showMessageDialog(this, scrollPane, "Proceso de Transformación", JOptionPane.INFORMATION_MESSAGE);
         });
-        botonCadena.addActionListener(e->{
-            if (displayA==null) {
+
+        botonCadena.addActionListener(e -> {
+            if (displayA == null) {
                 JOptionPane.showMessageDialog(this, "no hay automata, por favor introduzca una exprecion regular");
                 return;
             }
             boolean continuar = true;
-        while (continuar) {
-            String testString = JOptionPane.showInputDialog(null,
-                    "Ingrese una cadena para evaluar (o escriba 'salir' para terminar):", "Probar Autómata",
-                    JOptionPane.PLAIN_MESSAGE);
+            while (continuar) {
+                String testString = JOptionPane.showInputDialog(null,
+                        "Ingrese una cadena para evaluar (o escriba 'salir' para terminar):", "Probar Autómata",
+                        JOptionPane.PLAIN_MESSAGE);
 
-            if (testString == null || testString.equalsIgnoreCase("salir")) {
-                continuar = false;
-            } else {
-                boolean result = displayA.evaluateString(testString); // Suponiendo que tienes un método `evaluate` en
-                                                                      // Automata
-                String message = result ? "La cadena es aceptada por el autómata."
-                        : "La cadena no es aceptada por el autómata.";
-                JOptionPane.showMessageDialog(null, message, "Resultado", JOptionPane.INFORMATION_MESSAGE);
+                if (testString == null || testString.equalsIgnoreCase("salir")) {
+                    continuar = false;
+                } else {
+                    boolean result = displayA.evaluateString(testString); // Suponiendo que tienes un método `evaluate` en
+                    // Automata
+                    String message = result ? "La cadena es aceptada por el autómata."
+                            : "La cadena no es aceptada por el autómata.";
+                    JOptionPane.showMessageDialog(null, message, "Resultado", JOptionPane.INFORMATION_MESSAGE);
+                }
             }
-        }
         });
 
         setContentPane(panelConFondo);
@@ -162,13 +204,13 @@ public class ERAFD extends JFrame {
 
     private void mostrarFuentes() {
         String fuentes = "<html><body style='font-family: Montserrat;'>" +
-            "<h2>FUENTES BIBLIOGRÁFICAS</h2>" +
-            "<ol>" +
-            "<li>Hopcroft, J. E., Motwani, R., & Ullman, J. D. (2006). <i>Introduction to Automata Theory, Languages, and Computation</i>. Addison-Wesley.</li>" +
-            "<li>Thompson, K. (1968). <i>Regular Expression Search Algorithm</i>. Communications of the ACM, 11(6), 419-422.</li>" +
-            "<li>De Castro Korgi, R. (2004). <i>Teoría de la computación: Lenguajes, autómatas, gramáticas (1ª ed.)</i> [PDF]. Universidad Nacional de Colombia, Facultad de Ciencias. Impresión: UNIBIBLOS.</li>" +
-            "</ol>" +
-            "</body></html>";
+                "<h2>FUENTES BIBLIOGRÁFICAS</h2>" +
+                "<ol>" +
+                "<li>Hopcroft, J. E., Motwani, R., & Ullman, J. D. (2006). <i>Introduction to Automata Theory, Languages, and Computation</i>. Addison-Wesley.</li>" +
+                "<li>Thompson, K. (1968). <i>Regular Expression Search Algorithm</i>. Communications of the ACM, 11(6), 419-422.</li>" +
+                "<li>De Castro Korgi, R. (2004). <i>Teoría de la computación: Lenguajes, autómatas, gramáticas (1ª ed.)</i> [PDF]. Universidad Nacional de Colombia, Facultad de Ciencias. Impresión: UNIBIBLOS.</li>" +
+                "</ol>" +
+                "</body></html>";
 
         JEditorPane editorPane = new JEditorPane("text/html", fuentes);
         editorPane.setEditable(false);
@@ -207,4 +249,5 @@ public class ERAFD extends JFrame {
             JOptionPane.showMessageDialog(this, "Error al guardar la captura de pantalla.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
+
 }

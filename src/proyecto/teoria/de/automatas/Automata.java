@@ -1,5 +1,6 @@
 package proyecto.teoria.de.automatas;
 
+import java.awt.Graphics;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Stack;
@@ -472,6 +473,11 @@ public class Automata {
     
         // Si ninguna transición lleva a aceptación, se rechaza
         return false;
+    }
+
+    public void draw(Graphics g) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'draw'");
     }
     
     
