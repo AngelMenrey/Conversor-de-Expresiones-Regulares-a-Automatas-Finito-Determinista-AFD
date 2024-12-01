@@ -469,7 +469,7 @@ public class Operations {
     // Método main
     public static void main(String[] args) {
         Operations operations = new Operations();
-        determinate det=new determinate();
+        //determinate det=new determinate();
 
         // Pedir expresión regular
         String regex = JOptionPane.showInputDialog(null, "Ingrese una expresión regular:", "Generar Autómata",
@@ -497,11 +497,14 @@ public class Operations {
             JOptionPane.showMessageDialog(null, "Error al generar el autómata.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        det.convertAFNLToAFN(automata);
+        //det.convertAFNLToAFN(automata);
+        //Automata afd=det.convertAFNToAFD(automata);
         automata.nameStates();
+        //afd.nameStates();
         //automata.getFinalState().name = "final";
         System.out.println(logs);
         automata.displayAutomata();
+        //afd.displayAutomata();
 
         // Ciclo para probar cadenas
         boolean continuar = true;
