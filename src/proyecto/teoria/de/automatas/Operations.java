@@ -506,7 +506,8 @@ public class Operations {
         automata.displayAutomata();
 
         System.out.println("se va a convertir a automata afn no lambda");
-        automata.convertToAFN();
+        automata.convertToAFD();
+        automata.nameStates();
 
         System.out.println("se convirtio a afn no lambda");
         automata.displayAutomata();
