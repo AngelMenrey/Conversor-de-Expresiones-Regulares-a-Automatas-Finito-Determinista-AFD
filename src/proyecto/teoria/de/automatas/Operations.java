@@ -1,7 +1,6 @@
 package proyecto.teoria.de.automatas;
 
 import java.util.Stack;
-
 import javax.swing.JOptionPane;
 
 public class Operations {
@@ -231,6 +230,7 @@ public class Operations {
 
                 }
                 automatas.push(a);
+                logs.append("\nSe creo el automata simple:" + a.name);
                 boolean check = false;
                 if (i > 0 && regex.charAt(i - 1) == '|'&&!(i + 1 < regex.length() && ( '*'==regex.charAt(i + 1)))) {
                     if (!operators.isEmpty() && precedence(operators.peek()) == precedence('|')) {
@@ -238,7 +238,7 @@ public class Operations {
                         check = true;
                     }
                 }
-                logs.append("\nSe creo el automata simple:" + a.name);
+                
                 if (i + 1 < regex.length() && (0 == precedence(regex.charAt(i + 1))) && regex.charAt(i + 1) != ')'
                         && regex.charAt(i + 1) != '(') {
 
@@ -504,7 +504,12 @@ public class Operations {
         //automata.getFinalState().name = "final";
         System.out.println(logs);
         automata.displayAutomata();
-        //afd.displayAutomata();
+
+        System.out.println("se va a convertir a automata afn no lambda");
+        automata.convertToAFN();
+
+        System.out.println("se convirtio a afn no lambda");
+        automata.displayAutomata();
 
         // Ciclo para probar cadenas
         boolean continuar = true;
