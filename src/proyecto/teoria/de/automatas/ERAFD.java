@@ -143,8 +143,9 @@ public class ERAFD extends JFrame {
                 JOptionPane.showMessageDialog(null, "Error al generar el autómata.", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
+            displayA.convertToAFD();
             displayA.nameStates();
-            displayA.getFinalState().name = "final";
+            //displayA.getFinalState().name = "final";
             displayA.displayAutomata(process);
             displayA.arrangeStates(50, 10);
 
