@@ -2,7 +2,9 @@ package proyecto.teoria.de.automatas;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 
 public class Automata {
@@ -278,13 +280,7 @@ public class Automata {
 
     // --------------------------------------
     public Set<State> findStates(Character input,State state) {
-        State finalS=getFinalState();
         
-        Set<State> setL = new HashSet<>();
-        exploreLambda(setL, new HashSet<>(), head);
-        if (setL.contains(finalS)) {
-            head.end=true;
-        }
         Set<State> seti = new HashSet<>();
         findStateRecursively(seti, state, input, 0, new HashSet<>(), "");
         return seti;
@@ -384,6 +380,14 @@ public class Automata {
             System.out.println("El autómata ya es un AFN.");
             return;
         }
+
+        State finalS=getFinalState();
+        
+        Set<State> setL = new HashSet<>();
+        exploreLambda(setL, new HashSet<>(), head);
+        if (setL.contains(finalS)) {
+            head.end=true;
+        }
     
         // Paso 1: Extraer el alfabeto
         Set<Character> alphabet = getAlpha();
@@ -438,6 +442,98 @@ public class Automata {
         afnl = false;
         System.out.println("El autómata ha sido convertido a un AFN.");
     }
+
+    //------------------------------------------------------
+    public void convertToAFD() {
+    if (!afnl) {
+        System.out.println("El autómata ya es un AFN.");
+        return;
+    }
+
+    State finalS = getFinalState();
+
+    // Validar si el estado inicial tiene conexión lambda al final
+    Set<State> lambdaClosure = new HashSet<>();
+    exploreLambda(lambdaClosure, new HashSet<>(), head);
+    if (lambdaClosure.contains(finalS)) {
+        head.end = true;
+    }
+
+    // Paso 1: Extraer el alfabeto
+    Set<Character> alphabet = getAlpha();
+
+    // Paso 2: Crear un hash map global para transiciones de los estados actuales
+    Map<State, Map<Character, Set<State>>> globalTransitionsMap = new HashMap<>();
+    State currentState = head;
+
+    // Construir transiciones del mapa global
+    while (currentState != null) {
+        Map<Character, Set<State>> stateTransitionsMap = new HashMap<>();
+        for (Character c : alphabet) {
+            Set<State> reachableStates = findStates(c, currentState);
+            stateTransitionsMap.put(c, reachableStates);
+        }
+        globalTransitionsMap.put(currentState, stateTransitionsMap);
+        currentState = currentState.next;
+    }
+
+    // Paso 3: Construir el nuevo autómata
+    Automata newAutomaton = new Automata("auxiliar","");
+    Map<Set<State>, State> stateSetMapping = new HashMap<>();
+    Queue<Set<State>> stateQueue = new LinkedList<>();
+    Set<State> initialSet = lambdaClosure;
+
+    // Crear estado inicial en el nuevo autómata
+    State newInitialState = new State("newStart", containsFinalState(initialSet));
+    newAutomaton.head=newInitialState;
+    newInitialState.end = containsFinalState(initialSet);
+    stateSetMapping.put(initialSet, newInitialState);
+    stateQueue.add(initialSet);
+
+    // Procesar estados
+    while (!stateQueue.isEmpty()) {
+        Set<State> currentSet = stateQueue.poll();
+        State currentNewState = stateSetMapping.get(currentSet);
+
+        // Crear transiciones para cada carácter
+        for (Character c : alphabet) {
+            Set<State> combinedSet = new HashSet<>();
+            for (State s : currentSet) {
+                Set<State> transitions = globalTransitionsMap.get(s).get(c);
+                if (transitions != null) {
+                    combinedSet.addAll(transitions);
+                }
+            }
+
+            if (!combinedSet.isEmpty()) {
+                if (!stateSetMapping.containsKey(combinedSet)) {
+                    State newState = new State("s", containsFinalState(combinedSet));
+                    newAutomaton.addState(newState);
+                    stateSetMapping.put(combinedSet, newState);
+                    stateQueue.add(combinedSet);
+                }
+
+                currentNewState.addTransition(c, stateSetMapping.get(combinedSet));
+            }
+        }
+    }
+
+    // Paso 4: Reemplazar el autómata actual con el nuevo
+    this.head = newAutomaton.head;
+    this.afnl = false;
+    System.out.println("El autómata ha sido convertido a un AFD.");
+}
+
+// Helper: Verifica si un conjunto de estados contiene un estado final
+private boolean containsFinalState(Set<State> stateSet) {
+    for (State state : stateSet) {
+        if (state.end) {
+            return true;
+        }
+    }
+    return false;
+}
+
     
 
 
@@ -475,8 +571,12 @@ public class Automata {
         a.addState(s8);
         a.displayAutomata();
         //(a|b|c*(a|v)*)
-        a=o.processRegexSA("a*", log);
+        a=o.processRegexSA("(a|b|c*(a|v)*)", log);
         System.out.println("");
+        a.displayAutomata();
+        a.convertToAFD();
+        System.out.println("");
+        a.nameStates();
         a.displayAutomata();
         Set<Character> alfa =a.getAlpha();
         System.out.println("alfabeto");
