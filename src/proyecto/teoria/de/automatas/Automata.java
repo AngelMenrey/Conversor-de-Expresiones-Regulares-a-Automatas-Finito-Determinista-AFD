@@ -162,6 +162,55 @@ public class Automata {
 
     }
 
+    // Cantidad de estados regresados
+
+    public int countStates(){
+        int count=0;
+        State currentState = head;
+        while (currentState != null) {
+            count++;
+            currentState = currentState.next;
+        }
+        return count;
+
+    }
+
+    public void arrangeStatesInCircle(int x, int y, int circumference) {
+        int totalStates = countStates();
+        if (totalStates == 0) return;
+    
+        // Calcular el radio del círculo basado en la circunferencia de los estados
+        double radius = (circumference * totalStates) / (2 * Math.PI);
+    
+        // Ángulo entre cada estado en radianes
+        double angleStep = (2 * Math.PI) / totalStates;
+    
+        // Coordenadas iniciales (desplazamiento)
+        int centerX = x+(int)radius*2;
+        int centerY = y+(int)radius*2;
+    
+        // Iterar por los estados y asignar coordenadas
+        State currentState = head;
+        int index = 0;
+        while (currentState != null) {
+            // Calcular el ángulo actual
+            double angle = index * angleStep;
+    
+            // Calcular las nuevas coordenadas
+            int newX = centerX + (int) (radius * Math.cos(angle));
+            int newY = centerY + (int) (radius * Math.sin(angle));
+    
+            // Asignar las coordenadas al estado
+            currentState.x = newX;
+            currentState.y = newY;
+    
+            // Pasar al siguiente estado
+            currentState = currentState.next;
+            index++;
+        }
+    }
+    
+
     // Funcion para medir estados
     public void arrangeStates(int diameter, int rows) {
         if (head == null) {
