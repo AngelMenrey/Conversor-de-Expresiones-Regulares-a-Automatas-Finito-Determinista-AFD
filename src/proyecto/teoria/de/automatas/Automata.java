@@ -161,6 +161,23 @@ public class Automata {
         }
 
     }
+    public void nameStates(Character c) {
+        if (head == null) {
+            return;
+        }
+
+        int stateCount = 0;
+        State currentState = head;
+
+        while (currentState != null) {
+            currentState.name = c.toString() + (stateCount++);
+            if (currentState.end) {
+                currentState.name = currentState.name + "F";
+            }
+            currentState = currentState.next;
+        }
+
+    }
 
     // Cantidad de estados regresados
 
@@ -329,15 +346,22 @@ public class Automata {
 
     // --------------------------------------
     public Set<State> findStates(Character input,State state) {
+        Set<State> seti = new HashSet<>();
+        StringBuilder logs=new StringBuilder("");
+        findStateRecursively(seti, state, input, 0, new HashSet<>(), "",logs);
+        return seti;
+
+    }
+    public Set<State> findStates(Character input,State state,StringBuilder logs) {
         
         Set<State> seti = new HashSet<>();
-        findStateRecursively(seti, state, input, 0, new HashSet<>(), "");
+        findStateRecursively(seti, state, input, 0, new HashSet<>(), "",logs);
         return seti;
 
     }
 
     private boolean findStateRecursively(Set<State> save, State currentState, Character input, int index,
-            Set<State> visited, String buffer) {
+            Set<State> visited, String buffer,StringBuilder logs) {
         // Si ya visitamos este estado, evitamos ciclos
         if (visited.contains(currentState)) {
             return false;
@@ -359,14 +383,15 @@ public class Automata {
 
                 if (!save.contains(transition.state)) {
                     save.add(transition.state);
-                    exploreLambda(save, new HashSet<>(), transition.state);
+                    logs.append("->"+transition.state.name);
+                    exploreLambda(save, new HashSet<>(), transition.state,logs);
                 }
 
             }
             if (transition.path == null) { // Transición lambda
                 // Pasar el buffer completo
 
-                findStateRecursively(save, transition.state, input, index, new HashSet<>(visited), buffer);
+                findStateRecursively(save, transition.state, input, index, new HashSet<>(visited), buffer,logs);
 
             }
             transition = transition.next;
@@ -377,7 +402,7 @@ public class Automata {
         return false;
     }
 
-    public void exploreLambda(Set<State> save, Set<State> visited, State currentState) {
+    public void exploreLambda(Set<State> save, Set<State> visited, State currentState,StringBuilder logs) {
         // Si ya visitamos este estado, evitamos ciclos
         if (visited.contains(currentState)) {
             return;
@@ -385,6 +410,8 @@ public class Automata {
         visited.add(currentState);
         if (!save.contains(currentState)) {
             save.add(currentState);
+            
+            logs.append("->"+currentState.name);
         }
 
         TransF transition = currentState.transHead;
@@ -396,14 +423,13 @@ public class Automata {
         while (transition != null) {
             if (transition.path == null) { // Transición lambda
                 // Pasar el buffer completo
-                exploreLambda(save, new HashSet<>(visited), transition.state);
+                exploreLambda(save, new HashSet<>(visited), transition.state,logs);
             }
             transition = transition.next;
         }
 
     }
     public Set<Character> getAlpha(){
-        
         Set<Character> alphabet = new HashSet<>();
 
         State s=head;
@@ -423,17 +449,41 @@ public class Automata {
         }
         return alphabet;
     }
+    public Set<Character> getAlpha(StringBuilder logs){
+        logs.append("\n");
+        Set<Character> alphabet = new HashSet<>();
+
+        State s=head;
+        TransF t;
+        while (s!=null) {
+            t=s.transHead;
+            while (t!=null) {
+                if (t.path!=null) {
+                    if (!alphabet.contains(t.path)) {
+                        alphabet.add(t.path);
+                        logs.append(t.path);
+                    }
+                }
+                t=t.next;
+            }
+
+            s=s.next;
+        }
+        return alphabet;
+    }
 
     public void convertToAFN() {
+        StringBuilder logs=new StringBuilder("");
         if (!afnl) {
             System.out.println("El autómata ya es un AFN.");
             return;
         }
 
         State finalS=getFinalState();
-        
+        logs.append("\nse encuentra el estado final unificado de afn:"+finalS.name);
+        logs.append("\n se explora la lambda clausula del estado inicial:"+head.name);
         Set<State> setL = new HashSet<>();
-        exploreLambda(setL, new HashSet<>(), head);
+        exploreLambda(setL, new HashSet<>(), head,logs);
         if (setL.contains(finalS)) {
             head.end=true;
         }
@@ -493,23 +543,35 @@ public class Automata {
     }
 
     //------------------------------------------------------
-    public void convertToAFD() {
+    public void convertToAFD(StringBuilder logs) {
     if (!afnl) {
-        System.out.println("El autómata ya es un AFN.");
+        
+        logs.append("El autómata ya es un AFN. No es necesario convertirlo.\n");
         return;
     }
+    logs.append("\n[Inicio de conversión a AFD]\n");
+
 
     State finalS = getFinalState();
+    
+    logs.append("1. Estado final unificado del AFN: ").append(finalS.name).append("\n");
+    logs.append("2. Explorando la clausura lambda del estado inicial: ").append(head.name).append("\n");
 
     // Validar si el estado inicial tiene conexión lambda al final
     Set<State> lambdaClosure = new HashSet<>();
-    exploreLambda(lambdaClosure, new HashSet<>(), head);
+    exploreLambda(lambdaClosure, new HashSet<>(), head,logs);
+    logs.append("\n");
     if (lambdaClosure.contains(finalS)) {
         head.end = true;
+        logs.append("   - La clausura lambda incluye el estado final, por lo que el estado inicial se marca como final.\n");
     }
+    logs.append("   - Clausura lambda explorada completamente.\n");
 
     // Paso 1: Extraer el alfabeto
-    Set<Character> alphabet = getAlpha();
+    logs.append("\n[Paso 1: Extracción del alfabeto]\n");
+
+    Set<Character> alphabet = getAlpha(logs);
+    logs.append("\n");
 
     // Paso 2: Crear un hash map global para transiciones de los estados actuales
     Map<State, Map<Character, Set<State>>> globalTransitionsMap = new HashMap<>();
@@ -517,9 +579,15 @@ public class Automata {
 
     // Construir transiciones del mapa global
     while (currentState != null) {
+        
+        logs.append("   - Explorando estado: ").append(currentState.name).append("\n");
         Map<Character, Set<State>> stateTransitionsMap = new HashMap<>();
         for (Character c : alphabet) {
-            Set<State> reachableStates = findStates(c, currentState);
+            
+            logs.append("     - Procesando carácter: '").append(c).append("'\n");
+            logs.append(c);
+            Set<State> reachableStates = findStates(c, currentState,logs);
+            logs.append("\n");
             stateTransitionsMap.put(c, reachableStates);
         }
         globalTransitionsMap.put(currentState, stateTransitionsMap);
@@ -527,49 +595,91 @@ public class Automata {
     }
 
     // Paso 3: Construir el nuevo autómata
+    
+    logs.append("\n[Paso 3: Construcción del nuevo autómata AFD]\n");
     Automata newAutomaton = new Automata("auxiliar","");
+    
     Map<Set<State>, State> stateSetMapping = new HashMap<>();
     Queue<Set<State>> stateQueue = new LinkedList<>();
+    
     Set<State> initialSet = lambdaClosure;
+
 
     // Crear estado inicial en el nuevo autómata
     State newInitialState = new State("newStart", containsFinalState(initialSet));
     newAutomaton.head=newInitialState;
+    
     newInitialState.end = containsFinalState(initialSet);
     stateSetMapping.put(initialSet, newInitialState);
     stateQueue.add(initialSet);
+    
+    logs.append("   - Nuevo estado inicial creado: ").append(newInitialState.name)
+        .append(" (equivalente a la clausura lambda del estado inicial del AFN)\n");
 
-    // Procesar estados
     while (!stateQueue.isEmpty()) {
         Set<State> currentSet = stateQueue.poll();
         State currentNewState = stateSetMapping.get(currentSet);
+        
+        logs.append("   - Procesando estado compuesto: ").append(currentNewState.name).append("\n");
 
         // Crear transiciones para cada carácter
+        int i=1;
+        
         for (Character c : alphabet) {
+            
+            logs.append("     - Explorando transiciones para carácter: '").append(c).append("'\n");
             Set<State> combinedSet = new HashSet<>();
+            
             for (State s : currentSet) {
+                logs.append("       - Explorando transiciones del estado: ").append(s.name).append("\n");
+                
+
                 Set<State> transitions = globalTransitionsMap.get(s).get(c);
+
+                
+                
                 if (transitions != null) {
                     combinedSet.addAll(transitions);
+                    logs.append("         - Transiciones alcanzables: ").append("\n");
+                
+                    for(State ts:transitions){
+                        logs.append(ts.name).append("\n");
+                    }
                 }
             }
 
             if (!combinedSet.isEmpty()) {
+                
                 if (!stateSetMapping.containsKey(combinedSet)) {
-                    State newState = new State("s", containsFinalState(combinedSet));
+                    
+                    State newState = new State("Nq"+i, containsFinalState(combinedSet));
+                    i++;
                     newAutomaton.addState(newState);
                     stateSetMapping.put(combinedSet, newState);
                     stateQueue.add(combinedSet);
+                    logs.append("         - la combinacion de estados accesibles es nuevo por lo que se creara otro estado para este: ").append("\n");
+                
+                    
+                    logs.append("         - Nuevo estado creado: ").append(newState.name).append("\n");
                 }
 
+                
+                logs.append("       - Transición añadida: ").append(currentNewState.name)
+                    .append(" --").append(c).append("--> ")
+                    .append(stateSetMapping.get(combinedSet).name).append("\n");
                 currentNewState.addTransition(c, stateSetMapping.get(combinedSet));
             }
         }
     }
 
     // Paso 4: Reemplazar el autómata actual con el nuevo
+    logs.append("\n[Paso 4: Finalización de la conversión]\n");
+    logs.append("   - El nuevo autómata reemplaza al original. El autómata ahora es un AFD.\n");
+    
     this.head = newAutomaton.head;
     this.afnl = false;
+    logs.append("[Conversión completada]\n");
+    
     System.out.println("El autómata ha sido convertido a un AFD.");
 }
 
@@ -623,7 +733,8 @@ private boolean containsFinalState(Set<State> stateSet) {
         a=o.processRegexSA("(a|b|c*(a|v)*)", log);
         System.out.println("");
         a.displayAutomata();
-        a.convertToAFD();
+        StringBuilder logs=new StringBuilder("");
+        a.convertToAFD(logs);
         System.out.println("");
         a.nameStates();
         a.displayAutomata();

@@ -145,7 +145,6 @@ public class ERAFD extends JFrame {
                         draggedState = state; // Estado seleccionado
                         offsetX = dx; // Compensación en X
                         offsetY = dy; // Compensación en Y
-                        System.out.println("se encontro un estado" + state.name);
                         break;
                     }
                     state = state.next;
@@ -158,7 +157,6 @@ public class ERAFD extends JFrame {
                 // Al soltar el ratón, liberar el estado arrastrado
                 if (draggedState != null) {
                     // Actualizar buffer principal
-                    System.out.println("se libero el estado");
                     repaint();
                     draggedState = null;
                 }
@@ -172,7 +170,6 @@ public class ERAFD extends JFrame {
                     // Actualizar posición del estado mientras se arrastra
                     draggedState.x = e.getX() - offsetX;
                     draggedState.y = e.getY() - offsetY;
-                    System.out.print(".");
 
                     // Redibujar desde el buffer secundario
                     repaint();
@@ -234,7 +231,7 @@ public class ERAFD extends JFrame {
             process.append(String.format("""
                     Logs/proceso de transformacion
                     %s
-                    regex ->AFD-Lambda
+                    regex ->AFN-lambda
                     \n
                     """, regex));
 
@@ -244,17 +241,31 @@ public class ERAFD extends JFrame {
                         JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            displayA.convertToAFD();
+            displayA.nameStates();
+            displayA.displayAutomata(process);
+            process.append(String.format("""
+                    Logs/proceso de transformacion
+                    %s
+                    AFN-Lambda ->AFD
+                    \n
+                    """, regex));
+            displayA.convertToAFD(process);
+            process.append("\nresultado\n");
+            displayA.displayAutomata(process);
             displayA.nameStates();
             // displayA.getFinalState().name = "final";
+
+            process.append("\nnombrar estados en orden\n");
+            
             displayA.displayAutomata(process);
             // displayA.arrangeStates(50, 10);
 
             // Update the automata label
             String processText = process.toString();
-            int index = processText.indexOf("Se culmino el automata");
+            
+            int index = processText.indexOf("\nnombrar estados en orden\n");
             if (index != -1) {
-                processText = processText.substring(index + "Se culmino el automata".length());
+                processText = processText.substring(index + "\nnombrar estados en orden\n".length());
             }
             automataLabel.setText("<html>" + processText.replace("\n", "<br>") + "</html>");
 
