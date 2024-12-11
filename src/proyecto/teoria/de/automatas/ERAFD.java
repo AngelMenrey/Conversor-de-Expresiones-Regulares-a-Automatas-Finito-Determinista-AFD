@@ -20,6 +20,8 @@ public class ERAFD extends JFrame {
     private Automata displayA;
     private JLabel automataLabel;
     private Point initialClick;
+    private State draggedState = null; // Estado actualmente arrastrado
+    private int offsetX, offsetY; // Compensación del ratón dentro del estado
 
     private JPanel drawingPanel;
 
@@ -99,6 +101,7 @@ public class ERAFD extends JFrame {
 
         // seccion nueva para el panel conscroll
         // Panel de dibujo con scroll
+
         drawingPanel = new JPanel(null) {
             @Override
             protected void paintComponent(Graphics g) {
@@ -115,8 +118,7 @@ public class ERAFD extends JFrame {
                     int diameter = (int) (2 * radius + spacing + 120); // 120 = margen adicional
                     diameter = spacing * (totalStates / 2) + 120;
                     // Redimensionar dinámicamente el panel
-                    displayA.arrangeStatesInCircle(0, 50, spacing);
-                    setPreferredSize(new Dimension(diameter, diameter+50));
+                    setPreferredSize(new Dimension(diameter, diameter + 50));
                     revalidate();
                     drawAutomaton(g);
                 }
@@ -124,6 +126,60 @@ public class ERAFD extends JFrame {
         };
 
         drawingPanel.setPreferredSize(new Dimension(800, 800));
+
+        // Agregar MouseListener y MouseMotionListener al panel
+        drawingPanel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                int mouseX = e.getX();
+                int mouseY = e.getY();
+                System.out.println("se preciono");
+
+                // Buscar si el clic está dentro de algún estado
+                State state = displayA.head;
+                while (state != null) {
+                    int radius = 30; // Radio del estado
+                    int dx = mouseX - state.x;
+                    int dy = mouseY - state.y;
+                    if (Math.sqrt(dx * dx + dy * dy) <= radius) {
+                        draggedState = state; // Estado seleccionado
+                        offsetX = dx; // Compensación en X
+                        offsetY = dy; // Compensación en Y
+                        System.out.println("se encontro un estado" + state.name);
+                        break;
+                    }
+                    state = state.next;
+                }
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                // Al soltar el ratón, liberar el estado arrastrado
+                if (draggedState != null) {
+                    // Actualizar buffer principal
+                    System.out.println("se libero el estado");
+                    repaint();
+                    draggedState = null;
+                }
+            }
+        });
+
+        drawingPanel.addMouseMotionListener(new MouseMotionAdapter() {
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                if (draggedState != null) {
+                    // Actualizar posición del estado mientras se arrastra
+                    draggedState.x = e.getX() - offsetX;
+                    draggedState.y = e.getY() - offsetY;
+                    System.out.print(".");
+
+                    // Redibujar desde el buffer secundario
+                    repaint();
+                }
+            }
+        });
+
         JScrollPane scrollPanedraw = new JScrollPane(drawingPanel);
         scrollPanedraw.setBounds(0, buttonY + buttonHeight + spacing, 600, 600 - buttonY - buttonHeight - spacing - 50);
         panelConFondo.add(scrollPanedraw);
@@ -202,6 +258,7 @@ public class ERAFD extends JFrame {
             }
             automataLabel.setText("<html>" + processText.replace("\n", "<br>") + "</html>");
 
+            displayA.arrangeStatesInCircle(0, 50, 150);
             drawingPanel.repaint();
 
         });
@@ -281,29 +338,30 @@ public class ERAFD extends JFrame {
     private void capturarPantalla() {
         try {
             // Crear una imagen del tamaño del drawingPanel
-            BufferedImage imagen = new BufferedImage(drawingPanel.getWidth(), drawingPanel.getHeight(), BufferedImage.TYPE_INT_RGB);
+            BufferedImage imagen = new BufferedImage(drawingPanel.getWidth(), drawingPanel.getHeight(),
+                    BufferedImage.TYPE_INT_RGB);
             Graphics2D g2d = imagen.createGraphics();
-    
+
             // Pintar el contenido del drawingPanel en la imagen
             drawingPanel.paintAll(g2d);
             g2d.dispose();
-    
+
             // Crear directorio si no existe
-            File directorio = new File("Proyecto-Teoria-de-Automatas\\src\\proyecto\\teoria\\de\\automatas\\capturas");
+            File directorio = new File("Proyecto-Teoria-de-Automatas\\capturas");
             if (!directorio.exists()) {
                 directorio.mkdirs();
             }
-    
+
             // Guardar la imagen como archivo
             File archivo = new File(directorio, "captura_" + System.currentTimeMillis() + ".png");
             ImageIO.write(imagen, "png", archivo);
-    
+
             // Mostrar mensaje de confirmación
             JPanel panel = new JPanel(new BorderLayout());
             JLabel label = new JLabel("Captura guardada correctamente");
             panel.add(label, BorderLayout.CENTER);
             panel.setPreferredSize(new Dimension(400, 100));
-    
+
             Object[] options = { "ACEPTAR" };
             JOptionPane.showOptionDialog(this, panel, "Captura de Pantalla", JOptionPane.DEFAULT_OPTION,
                     JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
@@ -313,7 +371,6 @@ public class ERAFD extends JFrame {
                     JOptionPane.ERROR_MESSAGE);
         }
     }
-    
 
     private void capturarPantallaDeprecated() {
         try {
@@ -345,171 +402,124 @@ public class ERAFD extends JFrame {
         }
     }
 
+    
+
     private void drawAutomaton(Graphics g) {
         Graphics2D g2 = (Graphics2D) g; // Usar Graphics2D para mayor precisión
         State state = displayA.head;
-    
+
+        // HashMap para almacenar las transiciones por estado de origen
+        Map<State, Map<State, StringBuilder>> transitionsByState = new HashMap<>();
+
+        // Dibujar los estados y registrar transiciones
         while (state != null) {
             int x = state.x, y = state.y;
             int radius = 30;
-    
+
             // Dibujar flecha de inicio
             if (state == displayA.head) {
                 g.drawLine(x - 40 - 20, y - 30, x - 15 - 20, y);
                 g.drawLine(x - 40 - 20, y + 30, x - 15 - 20, y);
             }
-    
+
             // Dibujar círculo del estado
             g.setColor(Color.WHITE);
             g.fillOval(x - radius, y - radius, 2 * radius, 2 * radius);
             g.setColor(Color.BLACK);
             g.drawOval(x - radius, y - radius, 2 * radius, 2 * radius);
-    
+
             // Dibujar círculo exterior si es final
             if (state.end)
                 g.drawOval(x - radius - 5, y - radius - 5, 2 * radius + 10, 2 * radius + 10);
-    
+
             // Dibujar nombre del estado
             g.drawString(state.name, x - 10, y + 5);
-    
-            // Dibujar transiciones
+
+            // Registrar las transiciones de este estado en su HashMap correspondiente
             TransF transition = state.transHead;
-            Map<State, StringBuilder> selfTransitions = new HashMap<>();
-    
             while (transition != null) {
                 State target = transition.state;
-    
-                if (target == state) {
-                    // Acumular caracteres de transiciones a sí mismo
-                    selfTransitions.putIfAbsent(target, new StringBuilder());
-                    selfTransitions.get(target).append(transition.path).append(", ");
+
+                // Obtener o crear el mapa de transiciones para este estado
+                transitionsByState.putIfAbsent(state, new HashMap<>());
+                Map<State, StringBuilder> targetMap = transitionsByState.get(state);
+
+                // Agregar o actualizar el estado destino con el carácter correspondiente
+                targetMap.putIfAbsent(target, new StringBuilder());
+                targetMap.get(target).append(transition.path).append(", ");
+
+                transition = transition.next;
+            }
+
+            state = state.next;
+        }
+
+        // Dibujar las transiciones almacenadas
+        for (Map.Entry<State, Map<State, StringBuilder>> entry : transitionsByState.entrySet()) {
+            State source = entry.getKey();
+            Map<State, StringBuilder> targetMap = entry.getValue();
+
+            for (Map.Entry<State, StringBuilder> targetEntry : targetMap.entrySet()) {
+                State target = targetEntry.getKey();
+                String label = targetEntry.getValue().toString().replaceAll(", $", ""); // Eliminar la última coma y
+                                                                                        // espacio
+
+                int x1 = source.x, y1 = source.y;
+                int x2 = target.x, y2 = target.y;
+                int radius = 30;
+
+                if (source == target) {
+                    // Dibujar arco para transiciones a sí mismo
+                    int arcX = x1 - radius;
+                    int arcY = y1 - radius - 40;
+                    int arcWidth = radius * 2;
+                    int arcHeight = radius * 2;
+                    g2.drawArc(arcX, arcY, arcWidth, arcHeight, 0, 360);
+
+                    // Etiqueta del arco
+                    g2.drawString(label, arcX + arcWidth / 2 - 10, arcY - 10);
                 } else {
-                    // Dibujar línea con dirección
-                    int dx = target.x - x, dy = target.y - y;
+                    // Dibujar línea de transición normal
+                    int dx = x2 - x1, dy = y2 - y1;
                     double angle = Math.atan2(dy, dx);
-                    int startX = x + (int) (radius * Math.cos(angle));
-                    int startY = y + (int) (radius * Math.sin(angle));
-                    int endX = target.x - (int) (radius * Math.cos(angle));
-                    int endY = target.y - (int) (radius * Math.sin(angle));
-                    g.drawLine(startX, startY, endX, endY);
-    
-                    // Dibujar flecha
+
+                    // Calcular los puntos de inicio y final de la línea
+                    int startX = x1 + (int) (radius * Math.cos(angle));
+                    int startY = y1 + (int) (radius * Math.sin(angle));
+                    int endX = x2 - (int) (radius * Math.cos(angle));
+                    int endY = y2 - (int) (radius * Math.sin(angle));
+
+                    g2.drawLine(startX, startY, endX, endY);
+
+                    // Dibujar flecha al final
                     int arrowSize = 10;
                     double arrowAngle = Math.PI / 6;
                     int arrowX1 = (int) (endX - arrowSize * Math.cos(angle - arrowAngle));
                     int arrowY1 = (int) (endY - arrowSize * Math.sin(angle - arrowAngle));
                     int arrowX2 = (int) (endX - arrowSize * Math.cos(angle + arrowAngle));
                     int arrowY2 = (int) (endY - arrowSize * Math.sin(angle + arrowAngle));
-                    g.drawLine(endX, endY, arrowX1, arrowY1);
-                    g.drawLine(endX, endY, arrowX2, arrowY2);
-    
-                    // Etiqueta de transición
-                    int labelX = (startX + endX) / 2 - 10; // Más cerca del estado
-                    int labelY = (startY + endY) / 2 - 10;
-                    g.drawString(String.valueOf(transition.path), labelX, labelY);
+                    g2.drawLine(endX, endY, arrowX1, arrowY1);
+                    g2.drawLine(endX, endY, arrowX2, arrowY2);
+
+                    // Ajustar la posición de la etiqueta hacia el origen
+                    double ratio = 0.45; // Proporción entre el origen y el centro (0.5 sería la mitad)
+                    int adjustedX = (int) (startX + ratio * (endX - startX));
+                    int adjustedY = (int) (startY + ratio * (endY - startY));
+
+                    // Calcular el vector perpendicular
+                    int perpendicularX = -dy; // Girar 90 grados: (dx, dy) -> (-dy, dx)
+                    int perpendicularY = dx;
+
+                    // Normalizar el vector perpendicular
+                    double length = Math.sqrt(perpendicularX * perpendicularX + perpendicularY * perpendicularY);
+                    perpendicularX = (int) (perpendicularX / length * 15); // Escalar a 15 píxeles
+                    perpendicularY = (int) (perpendicularY / length * 15);
+
+                    // Dibujar la etiqueta más cerca del origen
+                    g2.drawString(label, adjustedX + perpendicularX, adjustedY + perpendicularY);
+
                 }
-    
-                transition = transition.next;
             }
-    
-            // Dibujar arcos para transiciones a sí mismo
-            for (Map.Entry<State, StringBuilder> entry : selfTransitions.entrySet()) {
-                State selfState = entry.getKey();
-                String label = entry.getValue().toString().replaceAll(", $", ""); // Eliminar la última coma y espacio
-    
-                // Dibujar arco hacia la derecha del estado
-                int arcX = selfState.x - radius;
-                int arcY = selfState.y - radius - 40;
-                int arcWidth = radius * 2;
-                int arcHeight = radius * 2;
-    
-                g2.drawArc(arcX, arcY, arcWidth, arcHeight, 0, 360); // Arco completo
-    
-                // Etiqueta del arco
-                g2.drawString(label, arcX + arcWidth / 2 - 10, arcY - 10);
-            }
-    
-            state = state.next;
-        }
-    }
-    
-
-    private void drawAutomatonD(Graphics g) {
-
-        State state = displayA.head;
-        while (state != null) {
-
-            int x = state.x, y = state.y;
-            int radius = 30;
-
-            // Dibujar flecha de inicio
-            if (state == displayA.head) {
-                // g.drawLine(x - 40-20, y, x - 15-20, y);
-                g.drawLine(x - 40 - 20, y - 30, x - 15 - 20, y);
-                g.drawLine(x - 40 - 20, y + 30, x - 15 - 20, y);
-            }
-
-            // Dibujar círculo del estado
-            g.setColor(Color.WHITE);
-            g.fillOval(x - radius, y - radius, 2 * radius, 2 * radius);
-            g.setColor(Color.BLACK);
-            g.drawOval(x - radius, y - radius, 2 * radius, 2 * radius);
-
-            // Dibujar círculo exterior si es final
-            if (state.end)
-                g.drawOval(x - radius - 5, y - radius - 5, 2 * radius + 10, 2 * radius + 10);
-
-            // Dibujar nombre del estado
-            g.drawString(state.name, x - 10, y + 5);
-
-            // Dibujar transiciones
-            TransF transition = state.transHead;
-            Map<State, StringBuilder> selfTransitions = new HashMap<>();
-
-            while (transition != null) {
-                State target = transition.state;
-
-                if (target == state) {
-                    // Si es una transición a sí mismo, acumular el carácter
-                    selfTransitions.putIfAbsent(target, new StringBuilder());
-                    selfTransitions.get(target).append(transition.path).append(", ");
-                } else {
-                    // Dibujar transición normal
-                    int dx = target.x - x, dy = target.y - y;
-                    double angle = Math.atan2(dy, dx);
-                    int startX = x + (int) (radius * Math.cos(angle));
-                    int startY = y + (int) (radius * Math.sin(angle));
-                    int endX = target.x - (int) (radius * Math.cos(angle));
-                    int endY = target.y - (int) (radius * Math.sin(angle));
-                    g.drawLine(startX, startY, endX, endY);
-
-                    // Etiqueta de transición
-                    int labelX = (startX + endX) / 2;
-                    int labelY = (startY + endY) / 2;
-                    g.drawString(String.valueOf(transition.path), labelX + 5, labelY - 5);
-                }
-
-                transition = transition.next;
-            }
-
-            // Dibujar arcos para las transiciones a sí mismo
-            for (Map.Entry<State, StringBuilder> entry : selfTransitions.entrySet()) {
-                State selfState = entry.getKey();
-                String label = entry.getValue().toString().replaceAll(", $", ""); // Eliminar la última coma y espacio
-
-                // Dibujar arco hacia la derecha del estado
-                int arcX = selfState.x + radius;
-                int arcY = selfState.y - radius / 2;
-                int arcWidth = radius * 2;
-                int arcHeight = radius;
-
-                g.drawArc(arcX, arcY, arcWidth, arcHeight, 0, 180); // Arco hacia la derecha
-
-                // Etiqueta del arco
-                g.drawString(label, arcX + arcWidth / 2 - 10, arcY - 5);
-            }
-
-            state = state.next;
         }
     }
 
